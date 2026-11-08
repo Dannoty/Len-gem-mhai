@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ค้นหาอัญมณีประจำเดือนเกิด</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Noto+Serif+Thai:wght@400;500;600&family=IBM+Plex+Sans+Thai:wght@300;400;500;600&display=swap">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>
+  /* Tailwind: ผูกชื่อสีและฟอนต์กับ CSS variables ด้านล่าง เพื่อให้ธีมสว่าง/มืดใช้ชุดเดียวกัน */
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: { ink: 'var(--ink)', muted: 'var(--muted)', gold: 'var(--gold)', surface: 'var(--surface)', line: 'var(--line)' },
+        fontFamily: { display: 'var(--font-display)', body: 'var(--font-body)' }
+      }
+    }
+  };
+</script>
+<style>
+  /* ==========================================================================
+     DESIGN TOKENS
+     Layout: หน้าเว็บคอลัมน์เดียวแบบเอกสารใบรับรองอัญมณี
+     - หน้าแรก: ข้อความชิดซ้าย + เวทีอัญมณีทางขวา
+     - ผลลัพธ์: แผงอัญมณีทางซ้าย + ใบรายละเอียดทางขวา
+     EDIT: เปลี่ยนโทนสีทั้งเว็บได้ที่ตัวแปรชุดนี้ที่เดียว
+     ========================================================================== */
+  @property --gem { syntax: '<color>'; inherits: true; initial-value: #B8142F; }
+
+  :root {
+    --bg: #F6F3EC;          /* ครีมขาวมุก */
+    --surface: #FDFBF7;
+    --ink: #0F1B38;         /* Navy */
+    --muted: #59627A;
+    --line: #E2DAC8;
+    --gold: #C4A46A;        /* ทองแชมเปญ (เส้น/พื้น) */
+    --gold-ink: #86651F;    /* ทองเข้มสำหรับตัวอักษร */
+    --on-gold: #0F1B38;
+    --btn-bg: #0F1B38;
+    --btn-fg: #F6F3EC;
+    --tint: rgba(196, 164, 106, .16);
+    --shadow: rgba(15, 27, 56, .28);
+    --font-display: 'Cormorant Garamond', 'Noto Serif Thai', Georgia, serif;
+    --font-body: 'IBM Plex Sans Thai', 'Noto Sans Thai', system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0B1630; --surface: #111F40; --ink: #F3ECDD; --muted: #A8B0C4; --line: #25365C;
+      --gold: #D2B473; --gold-ink: #DDC287; --btn-bg: #D2B473; --btn-fg: #0B1630;
+      --tint: rgba(210, 180, 115, .14); --shadow: rgba(0, 0, 0, .6);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0B1630; --surface: #111F40; --ink: #F3ECDD; --muted: #A8B0C4; --line: #25365C;
+    --gold: #D2B473; --gold-ink: #DDC287; --btn-bg: #D2B473; --btn-fg: #0B1630;
+    --tint: rgba(210, 180, 115, .14); --shadow: rgba(0, 0, 0, .6);
+    color-scheme: dark;
+  }
+
+  /* ---------- Base ---------- */
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.7;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 12px 40px;
+  }
+  .shell { max-width: 1080px; margin-inline: auto; }
+  .screen { min-width: 0; }
+  :focus-visible { outline: 2px solid var(--gold-ink); outline-offset: 3px; }
+
+  .eyebrow { margin: 0; font-size: .72rem; letter-spacing: .24em; text-transform: uppercase; color: var(--gold-ink); font-weight: 500; }
+  .label { margin: 0; font-size: .9rem; color: var(--gold-ink); font-weight: 500; }
+  .meta { margin: 0; font-size: .88rem; color: var(--muted); }
+
+  .brand { display: inline-flex; align-items: center; gap: .65rem; font-family: var(--font-display); font-size: 1.35rem; font-weight: 600; letter-spacing: .04em; color: var(--ink); text-decoration: none; }
+  .brand-mark { width: 26px; display: block; }
+
+  .h1 { margin: 1rem 0 0; font-family: var(--font-display); font-weight: 500; font-size: clamp(2rem, 6.2vw, 3.5rem); line-height: 1.36; text-wrap: balance; }
+  .h1 .accent { color: var(--gold-ink); }
+  .lede { margin: 1.4rem 0 0; max-width: 34rem; color: var(--muted); font-size: 1.02rem; }
+
+  /* ---------- Buttons ---------- */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: .65rem; padding: .95rem 1.7rem; background: var(--btn-bg); color: var(--btn-fg); border: 1px solid var(--btn-bg); border-radius: 2px; font: 500 1rem/1.3 var(--font-body); text-decoration: none; cursor: pointer; transition: transform .25s ease, box-shadow .25s ease, background .25s ease, border-color .25s ease; }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 14px 26px -16px var(--shadow); }
+  .btn .arrow { display: inline-block; transition: transform .25s ease; }
+  .btn:hover .arrow { transform: translateX(4px); }
+  .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+  .btn-ghost:hover { border-color: var(--gold); background: var(--tint); }
+  .link-btn { background: none; border: 0; padding: .25rem 0; color: var(--muted); font: inherit; font-size: .92rem; cursor: pointer; }
+  .link-btn:hover { color: var(--ink); }
+  .link-btn[disabled] { visibility: hidden; }
+  .text-link { color: var(--gold-ink); font-size: .92rem; text-underline-offset: 4px; }
+
+  /* ---------- Gem artwork ---------- */
+  .gem { display: block; width: 100%; height: auto; overflow: visible; }
+  .gem .sparkle { fill: var(--gold); transform-box: fill-box; transform-origin: center; animation: twinkle 3.2s ease-in-out infinite; }
+  .gem .sparkle:nth-of-type(2) { animation-delay: 1.1s; }
+  .gem .sparkle:nth-of-type(3) { animation-delay: 2s; }
+  @keyframes twinkle { 0%, 100% { opacity: .25; transform: scale(.7); } 50% { opacity: 1; transform: scale(1.1); } }
+
+  /* ---------- Welcome ---------- */
+  .stage { position: relative; width: min(340px, 78vw); margin-inline: auto; padding: 2rem 1rem 1rem; transition: --gem .6s ease; }
+  .stage::before { content: ""; position: absolute; inset: 0 0 8% 0; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in srgb, var(--gem) 26%, transparent), transparent 74%); }
+  .stage-gem { position: relative; filter: drop-shadow(0 22px 26px color-mix(in srgb, var(--gem) 35%, transparent)); }
+  .stage-caption { text-align: center; margin-top: .75rem; min-height: 4.2rem; }
+  .stage-name { margin: 0; font-family: var(--font-display); font-size: 1.7rem; font-weight: 600; line-height: 1.4; }
+  .stage-name .en { font-style: italic; font-weight: 400; color: var(--gold-ink); margin-left: .35rem; }
+  .stage-tag { margin: 0; color: var(--muted); font-size: .92rem; }
+  .picks { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .25rem; margin-top: 1rem; border-top: 1px solid var(--line); padding-top: .75rem; }
+  .pick { display: flex; flex-direction: column; align-items: center; gap: .35rem; padding: .5rem .15rem .4rem; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted); font: inherit; font-size: .8rem; line-height: 1.3; cursor: pointer; transition: color .2s ease, border-color .2s ease; }
+  .pick .mini { width: 38px; transition: transform .25s ease; }
+  .pick:hover .mini, .pick:focus-visible .mini { transform: translateY(-3px) scale(1.08); }
+  .pick[aria-pressed="true"] { color: var(--ink); border-bottom-color: var(--gold); }
+
+  /* ---------- Quiz ---------- */
+  .quiz { max-width: 760px; margin-inline: auto; padding-top: 1.25rem; }
+  .bar { height: 3px; background: var(--line); }
+  .bar > span { display: block; height: 100%; width: 20%; background: var(--gold); transition: width .5s cubic-bezier(.2, .7, .2, 1); }
+  .progress-label { margin: 0; font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; color: var(--gold-ink); font-variant-numeric: tabular-nums; }
+  .q-title { margin: .5rem 0 1.75rem; font-family: var(--font-display); font-weight: 500; font-size: clamp(1.5rem, 4.6vw, 2.2rem); line-height: 1.45; text-wrap: balance; outline: none; }
+  .opts { display: grid; gap: .8rem; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 640px) { .opts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .opt { display: grid; grid-template-columns: 2.2rem minmax(0, 1fr); gap: .9rem; align-items: start; width: 100%; padding: 1.05rem 1.1rem; text-align: left; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; font: inherit; cursor: pointer; transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease, background .25s ease; }
+  .opt:hover { transform: translateY(-3px); border-color: var(--gold); box-shadow: 0 16px 28px -20px var(--shadow); }
+  .opt[aria-checked="true"] { border-color: var(--gold-ink); background: var(--tint); }
+  .opt-key { display: grid; place-items: center; width: 2.2rem; height: 2.2rem; border: 1px solid var(--gold); color: var(--gold-ink); font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; transition: background .25s ease, color .25s ease; }
+  .opt:hover .opt-key, .opt[aria-checked="true"] .opt-key { background: var(--gold); color: var(--on-gold); }
+  .opt-main { display: block; font-weight: 500; line-height: 1.55; padding-top: .1rem; }
+  .opt-hint { display: block; margin-top: .2rem; font-size: .88rem; color: var(--muted); }
+
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  @keyframes slideFwd { from { opacity: 0; transform: translateX(32px); } to { opacity: 1; transform: none; } }
+  @keyframes slideBack { from { opacity: 0; transform: translateX(-32px); } to { opacity: 1; transform: none; } }
+  @keyframes fadeOut { to { opacity: 0; transform: translateX(-18px); } }
+  @keyframes pop { from { opacity: 0; transform: scale(.82) rotate(-3deg); } to { opacity: 1; transform: none; } }
+  .screen-enter { animation: rise .6s cubic-bezier(.2, .7, .2, 1) both; }
+  .q-enter-fwd { animation: slideFwd .5s cubic-bezier(.2, .7, .2, 1) both; }
+  .q-enter-back { animation: slideBack .5s cubic-bezier(.2, .7, .2, 1) both; }
+  .q-leave { animation: fadeOut .22s ease both; }
+
+  /* ---------- Result ---------- */
+  .gem-panel { padding: clamp(1.5rem, 4vw, 2.25rem); border: 1px solid var(--line); border-radius: 4px; background: linear-gradient(180deg, color-mix(in srgb, var(--gem) 14%, var(--surface)), var(--surface) 72%); text-align: center; display: flex; flex-direction: column; align-items: center; }
+  .gem-art { width: min(250px, 68%); margin: 1.25rem 0 .5rem; animation: pop .9s cubic-bezier(.2, .8, .2, 1) both; filter: drop-shadow(0 20px 22px color-mix(in srgb, var(--gem) 32%, transparent)); }
+  .gem-name { margin: .5rem 0 0; font-family: var(--font-display); font-size: clamp(2.3rem, 7vw, 3.1rem); font-weight: 600; line-height: 1.35; }
+  .gem-en { margin: 0; font-family: var(--font-display); font-style: italic; font-size: 1.4rem; color: var(--gold-ink); }
+  .gem-tag { margin: .6rem 0 0; color: var(--muted); }
+  .chip-quarter { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--line); width: 100%; font-size: .86rem; color: var(--muted); }
+  .chip-quarter strong { color: var(--ink); font-weight: 500; }
+
+  .sheet { padding: clamp(1.25rem, 4vw, 2.25rem); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; display: grid; gap: 1.6rem; align-content: start; min-width: 0; }
+  .sheet > section + section { border-top: 1px solid var(--line); padding-top: 1.5rem; }
+  .sec-title { margin: 0 0 .7rem; font-family: var(--font-display); font-size: 1.3rem; font-weight: 600; line-height: 1.4; }
+  .sec-en { margin-left: .5rem; font-size: .7rem; letter-spacing: .22em; text-transform: uppercase; color: var(--gold-ink); font-family: var(--font-body); font-weight: 500; }
+  .copy { margin: 0; color: var(--ink); }
+  .chips { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+  .chip { padding: .25rem .95rem; border: 1px solid var(--gold); border-radius: 999px; color: var(--gold-ink); font-size: .92rem; }
+  .palette { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .6rem; margin: 0; padding: 0; list-style: none; }
+  .sw-chip { height: 3.6rem; border: 1px solid var(--line); border-radius: 2px; }
+  .sw-name { margin-top: .4rem; font-size: .8rem; color: var(--muted); line-height: 1.4; }
+  .style-note { margin: 0 0 .5rem; padding: .7rem .9rem; background: var(--tint); border-radius: 2px; font-size: .92rem; }
+  .jw { display: grid; grid-template-columns: 1.8rem minmax(0, 1fr); gap: .9rem; padding: .75rem 0; }
+  .jw + .jw { border-top: 1px dashed var(--line); }
+  .jw-ico { color: var(--gold-ink); width: 1.6rem; height: 1.6rem; margin-top: .1rem; }
+  .jw-name { font-weight: 500; }
+  .jw-text { display: block; color: var(--muted); font-size: .95rem; }
+  .badge { margin-left: .5rem; padding: .1rem .6rem; border-radius: 999px; background: var(--gold); color: var(--on-gold); font-size: .72rem; font-weight: 500; white-space: nowrap; }
+  .second { display: grid; grid-template-columns: 4.2rem minmax(0, 1fr); gap: 1rem; align-items: center; }
+  .second-name { margin: 0; font-family: var(--font-display); font-size: 1.35rem; font-weight: 600; line-height: 1.4; }
+  .second-name .en { font-style: italic; font-weight: 400; color: var(--gold-ink); margin-left: .35rem; }
+
+  .cta { margin-top: 1.5rem; padding: 1.5rem clamp(1.25rem, 4vw, 2.25rem); display: grid; gap: 1rem; border: 1px solid var(--gold); border-radius: 4px; background: var(--surface); }
+  .cta-row { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; }
+  .cta-row .btn { flex: 1 1 14rem; }
+  .share-links { display: flex; flex-wrap: wrap; gap: .4rem 1.25rem; align-items: center; }
+  .share-input { width: 100%; box-sizing: border-box; padding: .6rem .8rem; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; font-size: .88rem; border-radius: 2px; }
+  .shared-note { margin: 0 0 1rem; padding: .7rem 1rem; border-left: 2px solid var(--gold); background: var(--tint); font-size: .92rem; }
+
+  .foot { margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--line); font-size: .8rem; color: var(--muted); display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem 1.5rem; }
+  .foot p { margin: 0; max-width: 40rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<style>:root{color-scheme:light}[hidden]{display:none!important}</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ============ HEADER ============ -->
+  <header class="flex items-center justify-between gap-4 py-3">
+    <a class="brand" href="#" onclick="return false">
+      <span class="brand-mark" id="brand-mark" aria-hidden="true"></span>
+      <!-- EDIT: ชื่อร้านของคุณ -->
+      <span id="brand-name">Maison Aurée</span>
+    </a>
+    <span class="eyebrow hidden sm:inline">Birthstone Quiz</span>
+  </header>
+
+  <main id="app">
+
+    <!-- ============ 1) WELCOME SCREEN ============ -->
+    <section id="screen-welcome" class="screen screen-enter">
+      <div class="grid items-center gap-10 py-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,.9fr)] md:py-12">
+        <div>
+          <p class="eyebrow">Birthstone &amp; Energy Quiz</p>
+          <!-- EDIT: หัวข้อหน้าแรก (ส่วนที่เป็นสีทองอยู่ใน span.accent) -->
+          <h1 class="h1">ค้นหาอัญมณีประจำเดือนเกิด และ<span class="accent">พลังเสริมดวง</span>ของคุณ</h1>
+          <!-- EDIT: คำอธิบายใต้หัวข้อ -->
+          <p class="lede">ตอบ 5 คำถามสั้น ๆ เกี่ยวกับช่วงเดือนเกิด สีที่ชอบ และเป้าหมายของคุณ เราจะเลือกอัญมณีที่เข้ากับพลังเฉพาะตัว พร้อมคำแนะนำเครื่องประดับที่เหมาะกับสไตล์คุณ</p>
+          <div class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
+            <button id="btn-start" class="btn" type="button">เริ่มทำแบบทดสอบ <span class="arrow" aria-hidden="true">→</span></button>
+            <p class="meta">5 คำถาม · ใช้เวลาไม่ถึง 2 นาที</p>
+          </div>
+        </div>
+
+        <div>
+          <div class="stage" id="stage">
+            <div class="stage-gem" id="stage-gem"></div>
+          </div>
+          <div class="stage-caption" aria-live="polite">
+            <p class="stage-name"><span id="stage-name">ทับทิม</span><span class="en" id="stage-en">Ruby</span></p>
+            <p class="stage-tag" id="stage-tag"></p>
+          </div>
+          <div class="picks" id="picks" role="group" aria-label="อัญมณีที่อาจเป็นผลลัพธ์ของคุณ"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 2) QUIZ SCREEN ============ -->
+    <section id="screen-quiz" class="screen" hidden>
+      <div class="quiz">
+        <div class="mb-3 flex items-center justify-between gap-4">
+          <button id="btn-back" class="link-btn" type="button">← ย้อนกลับ</button>
+          <p id="progress-label" class="progress-label" aria-live="polite">ข้อ 1 / 5</p>
+        </div>
+        <div class="bar" id="bar" role="progressbar" aria-label="ความคืบหน้าของแบบทดสอบ" aria-valuemin="1" aria-valuemax="5" aria-valuenow="1"><span id="bar-fill"></span></div>
+        <div id="quiz-body" class="mt-8"></div>
+      </div>
+    </section>
+
+    <!-- ============ 3) RESULT SCREEN ============ -->
+    <section id="screen-result" class="screen" hidden>
+      <div id="result-body" class="pt-4"></div>
+    </section>
+
+  </main>
+
+  <footer class="foot">
+    <!-- EDIT: ข้อความท้ายหน้า -->
+    <p>ความหมายของอัญมณีในแบบทดสอบนี้อ้างอิงความเชื่อและแรงบันดาลใจเพื่อความบันเทิง ไม่ใช่คำแนะนำทางการแพทย์หรือการเงิน</p>
+    <p id="foot-brand">© Maison Aurée Fine Jewelry</p>
+  </footer>
+</div>
+
+<script>
+/* ==========================================================================
+   EDIT ZONE 1: ค่าที่ร้านค้าแก้ไขบ่อย
+   ========================================================================== */
+const BRAND_NAME = 'Maison Aurée';          // ชื่อร้าน (แสดงที่หัวและท้ายหน้า)
+const SHARE_BASE_URL = '';                  // ลิงก์หน้าแบบทดสอบจริงของร้าน เช่น 'https://yourshop.com/quiz' (ว่าง = ใช้ลิงก์หน้าปัจจุบัน)
+
+/* ==========================================================================
+   EDIT ZONE 2: ข้อมูลอัญมณี (ชื่อ ความหมาย สี เครื่องประดับ ลิงก์ร้านค้า)
+   - color   = สีของภาพอัญมณี
+   - shop    = ลิงก์ปุ่ม "ช้อปคอลเลกชันอัญมณีนี้" ของแต่ละพลอย (ใส่ URL หน้า Catalog จริง)
+   ========================================================================== */
+/* ===== LOGIC START ===== */
+const GEM_ORDER = ['ruby', 'diamond', 'sapphire', 'emerald', 'amethyst'];
+
+const GEMS = {
+  ruby: {
+    th: 'ทับทิม', en: 'Ruby', color: '#B8142F',
+    tagline: 'อัญมณีแห่งไฟและหัวใจ',
+    meaning: 'ทับทิมคือสัญลักษณ์ของพลังชีวิตและความรักที่เปี่ยมล้น เชื่อกันว่าช่วยเสริมเสน่ห์ ความมั่นใจ และความกล้าตัดสินใจ ให้คุณก้าวเข้าสู่ทุกโอกาสด้วยแววตาที่เปล่งประกาย',
+    boost: 'เติมไฟและความมั่นใจให้ทุกการตัดสินใจ',
+    keywords: ['ความรัก', 'เสน่ห์', 'ความกล้าหาญ', 'พลังใจ'],
+    palette: [
+      { name: 'แดงทับทิม', hex: '#B8142F' }, { name: 'ชมพูกุหลาบ', hex: '#E6A9B8' },
+      { name: 'ไวน์เบอร์กันดี', hex: '#5E1224' }, { name: 'ทองแชมเปญ', hex: '#C9A96B' }
+    ],
+    jewelry: {
+      ring: 'แหวนทับทิมเม็ดเดี่ยวล้อมเพชร สวมที่นิ้วนางเพื่อเน้นพลังความรัก',
+      necklace: 'สร้อยคอจี้ทับทิมทรงหยดน้ำ ตัวเรือนทองสีกุหลาบ',
+      bracelet: 'กำไลทับทิมเรียงเม็ดสลับเพชรเล็ก ประกายนุ่มรับกับผิว'
+    },
+    shop: 'https://example.com/collections/ruby'
+  },
+  diamond: {
+    th: 'เพชร', en: 'Diamond', color: '#A9C8E3',
+    tagline: 'อัญมณีแห่งความบริสุทธิ์ที่ยืนยง',
+    meaning: 'เพชรแทนความบริสุทธิ์ ความแข็งแกร่งที่ไม่เสื่อมคลาย และความชัดเจนในใจ เชื่อกันว่าช่วยเสริมความสำเร็จ ความน่าเชื่อถือ และออร่าที่สง่างามในทุกที่ที่คุณไป',
+    boost: 'เพิ่มความชัดเจนและบารมีให้ภาพลักษณ์ของคุณ',
+    keywords: ['ความสำเร็จ', 'ความบริสุทธิ์', 'ความมั่นคง', 'บารมี'],
+    palette: [
+      { name: 'ขาวมุก', hex: '#F2EEE4' }, { name: 'ฟ้าน้ำแข็ง', hex: '#CFE2F0' },
+      { name: 'เงินแพลทินัม', hex: '#BFC4CC' }, { name: 'ทองแชมเปญ', hex: '#C9A96B' }
+    ],
+    jewelry: {
+      ring: 'แหวนเพชรเม็ดเดี่ยวทรงคลาสสิก ตัวเรือนทองคำขาวหรือแพลทินัม',
+      necklace: 'สร้อยคอจี้เพชรเม็ดเล็ก สวมได้ทุกวันและเข้ากับทุกชุด',
+      bracelet: 'กำไลเพชรเรียงแถว (Tennis Bracelet) ประกายต่อเนื่องสง่างาม'
+    },
+    shop: 'https://example.com/collections/diamond'
+  },
+  sapphire: {
+    th: 'ไพลิน', en: 'Blue Sapphire', color: '#1E3FA0',
+    tagline: 'อัญมณีแห่งปัญญาและความสงบลึก',
+    meaning: 'ไพลินเป็นสัญลักษณ์ของปัญญา ความซื่อสัตย์ และความสงบนิ่งภายใน เชื่อกันว่าช่วยปกป้องคุ้มครอง ขจัดพลังงานลบ และเสริมให้คุณตัดสินใจอย่างมีสติ',
+    boost: 'ช่วยให้ใจนิ่ง คิดรอบคอบ และมีเกราะคุ้มครอง',
+    keywords: ['ปัญญา', 'การปกป้อง', 'ความสุขุม', 'ความซื่อสัตย์'],
+    palette: [
+      { name: 'น้ำเงินคราม', hex: '#1E3FA0' }, { name: 'กรมท่า', hex: '#0F1B38' },
+      { name: 'ฟ้าเทอร์ควอยซ์', hex: '#5FB7B5' }, { name: 'เงินแพลทินัม', hex: '#BFC4CC' }
+    ],
+    jewelry: {
+      ring: 'แหวนไพลินทรงรีหรือสี่เหลี่ยม ตัวเรือนทองคำขาว ดูสุขุมน่าเชื่อถือ',
+      necklace: 'สร้อยคอจี้ไพลินเม็ดกลาง อยู่ใกล้หัวใจ เสริมความสงบ',
+      bracelet: 'กำไลตัวเรือนบางประดับไพลินเม็ดเล็ก สวมซ้อนได้หลายเส้น'
+    },
+    shop: 'https://example.com/collections/blue-sapphire'
+  },
+  emerald: {
+    th: 'มรกต', en: 'Emerald', color: '#0F8A5F',
+    tagline: 'อัญมณีแห่งความเจริญงอกงาม',
+    meaning: 'มรกตสื่อถึงการเติบโต ความอุดมสมบูรณ์ และความสมดุลของชีวิต เชื่อกันว่าช่วยเสริมโชคลาภ การเงิน และความก้าวหน้าในหน้าที่การงาน พร้อมความรู้สึกสดชื่นเหมือนต้นฤดูใบไม้ผลิ',
+    boost: 'หนุนความเจริญงอกงามและโอกาสด้านการเงิน',
+    keywords: ['ความมั่งคั่ง', 'การเติบโต', 'ความสมดุล', 'โชคลาภ'],
+    palette: [
+      { name: 'เขียวมรกต', hex: '#0F8A5F' }, { name: 'เขียวมะกอก', hex: '#7A8450' },
+      { name: 'เหลืองอำพัน', hex: '#C98F2B' }, { name: 'ทองแชมเปญ', hex: '#C9A96B' }
+    ],
+    jewelry: {
+      ring: 'แหวนมรกตทรงมุมตัด (Emerald Cut) ตัวเรือนทองคำ ดูมีระดับ',
+      necklace: 'สร้อยคอจี้มรกตล้อมเพชร เพิ่มความโดดเด่นอย่างสุภาพ',
+      bracelet: 'กำไลทองลายใบไม้ประดับมรกต เสริมพลังแห่งการเติบโต'
+    },
+    shop: 'https://example.com/collections/emerald'
+  },
+  amethyst: {
+    th: 'อเมทิสต์', en: 'Amethyst', color: '#8B5CB8',
+    tagline: 'อัญมณีแห่งความสงบและสัมผัสพิเศษ',
+    meaning: 'อเมทิสต์สื่อถึงความสงบ สติ และสัญชาตญาณที่เฉียบคม เชื่อกันว่าช่วยคลายความกังวล ปัดเป่าพลังงานลบ และเสริมความคิดสร้างสรรค์ให้ลื่นไหลเหมือนสายลม',
+    boost: 'คลายความกังวล เพิ่มสมาธิและสัญชาตญาณ',
+    keywords: ['ความสงบ', 'สัญชาตญาณ', 'การปกป้อง', 'จินตนาการ'],
+    palette: [
+      { name: 'ม่วงอเมทิสต์', hex: '#8B5CB8' }, { name: 'ลาเวนเดอร์', hex: '#C9B6E4' },
+      { name: 'ม่วงองุ่น', hex: '#4B2A6B' }, { name: 'ทองแชมเปญ', hex: '#C9A96B' }
+    ],
+    jewelry: {
+      ring: 'แหวนอเมทิสต์ทรงหยดน้ำหรือทรงรี ตัวเรือนทองสีกุหลาบ',
+      necklace: 'สร้อยคอจี้อเมทิสต์ทรงแท่งคริสตัล สวมง่ายและมีเอกลักษณ์',
+      bracelet: 'กำไลอเมทิสต์เม็ดเล็กเรียงเส้น คั่นด้วยลูกปัดทอง'
+    },
+    shop: 'https://example.com/collections/amethyst'
+  }
+};
+
+/* ==========================================================================
+   EDIT ZONE 3: คำถามและตัวเลือก
+   - main  = ข้อความหลักของตัวเลือก,  hint = คำอธิบายสั้น (เว้นว่างได้)
+   - score = คะแนนที่ตัวเลือกนี้ให้แต่ละอัญมณี
+   - ข้อ 1 (เดือนเกิด) เป็นแกนหลัก: หินหลัก +6, หินคู่ใกล้เคียง +4
+     (ช่วง เม.ย. - มิ.ย. ให้เพชรและมรกตเท่ากัน +5 เพราะเป็นหินประจำเดือนเมษายนและพฤษภาคม ข้ออื่นช่วยตัดสิน)
+     ข้อ 2-5 ให้ข้อละ 1-2 คะแนน และใช้เลือก "หินเสริมพลังรอง"
+   ========================================================================== */
+const QUESTIONS = [
+  {
+    title: 'ช่วงเดือนเกิดของคุณอยู่ในช่วงฤดูกาลหรือไตรมาสใดของปี?',
+    options: [
+      { main: 'ม.ค. – มี.ค.', hint: 'การเริ่มต้นใหม่ ความสดชื่น', score: { amethyst: 6, diamond: 4 } },
+      { main: 'เม.ย. – มิ.ย.', hint: 'พลังงานแสงแดด ความมีชีวิตชีวา', score: { diamond: 5, emerald: 5 } },
+      { main: 'ก.ค. – ก.ย.', hint: 'ความมั่นคง ความอุดมสมบูรณ์', score: { ruby: 6, sapphire: 4 } },
+      { main: 'ต.ค. – ธ.ค.', hint: 'ความสงบนิ่ง ความลุ่มลึก', score: { sapphire: 6, amethyst: 4 } }
+    ]
+  },
+  {
+    title: 'โทนสีของเครื่องประดับที่คุณสวมใส่แล้วรู้สึกมั่นใจที่สุด?',
+    options: [
+      { main: 'แดงก่ำ, ชมพู หรือม่วงเข้ม', hint: 'ทรงพลัง เปี่ยมเสน่ห์', score: { ruby: 2, amethyst: 1 } },
+      { main: 'ขาวประกาย, ใส หรือฟ้าสว่าง', hint: 'บริสุทธิ์ สง่างาม สบายตา', score: { diamond: 2, sapphire: 1 } },
+      { main: 'เขียวมรกต, เขียวมะกอก หรือเหลืองอำพัน', hint: 'อบอุ่น เป็นธรรมชาติ', score: { emerald: 2 } },
+      { main: 'น้ำเงินคราม, ฟ้าเทอร์ควอยซ์ หรือดำลึกลับ', hint: 'สุขุม หนักแน่น', score: { sapphire: 2, amethyst: 1 } }
+    ]
+  },
+  {
+    title: 'เป้าหมายหลักที่คุณอยากเสริมพลังในชีวิตช่วงนี้?',
+    options: [
+      { main: 'ความรัก ความเมตตา และเสน่ห์ดึงดูด', hint: '', score: { ruby: 2, emerald: 1 } },
+      { main: 'ความมั่งคั่ง การเงิน และความสำเร็จในอาชีพ', hint: '', score: { diamond: 2, emerald: 1 } },
+      { main: 'ความสงบทางใจ คลายกังวล และสุขภาพ', hint: '', score: { amethyst: 2, emerald: 1 } },
+      { main: 'ปกป้องคุ้มครอง ขจัดพลังงานลบ และเสริมสิริมงคล', hint: '', score: { sapphire: 2, diamond: 1 } }
+    ]
+  },
+  {
+    title: 'สไตล์การแต่งตัวและเครื่องประดับที่คุณชื่นชอบ?',
+    options: [
+      { main: 'คลาสสิก เรียบง่าย สวมใส่ได้ทุกวัน', hint: 'Timeless & Daily', score: { diamond: 1, sapphire: 1 } },
+      { main: 'ระยิบระยับ หรูหรา โดดเด่นในโอกาสพิเศษ', hint: 'Glamour & Luxury', score: { ruby: 1, emerald: 1 } },
+      { main: 'โบฮีเมียน วินเทจ มีเอกลักษณ์เฉพาะตัว', hint: 'Unique & Vintage', score: { amethyst: 1, emerald: 1 } },
+      { main: 'โมเดิร์น มินิมอล เส้นสายเรียบเท่', hint: 'Modern Minimalist', score: { diamond: 1, amethyst: 1 } }
+    ]
+  },
+  {
+    title: 'หากเปรียบพลังงานในตัวคุณเป็นสิ่งหนึ่ง คุณรู้สึกว่าตรงกับอะไรมากที่สุด?',
+    options: [
+      { main: 'เปลวไฟที่อบอุ่นและกระตือรือร้น', hint: '', score: { ruby: 2 } },
+      { main: 'สายน้ำที่ไหลเย็นและปรับตัวเก่ง', hint: '', score: { sapphire: 1, diamond: 1 } },
+      { main: 'สายลมที่อิสระและเปี่ยมด้วยจินตนาการ', hint: '', score: { amethyst: 2 } },
+      { main: 'ผืนดินที่มั่นคงและพึ่งพาได้เสมอ', hint: '', score: { emerald: 2 } }
+    ]
+  }
+];
+
+/* EDIT ZONE 4: คำแนะนำสไตล์เครื่องประดับ (อิงคำตอบข้อ 4)
+   piece = ชิ้นที่จะแสดงป้าย "เข้ากับสไตล์คุณ" (ring | necklace | bracelet) */
+const STYLES = [
+  { label: 'Timeless & Daily', piece: 'ring', note: 'เลือกดีไซน์เรียบง่ายขนาดพอดี สวมได้ทุกวันและเข้ากับทุกชุด' },
+  { label: 'Glamour & Luxury', piece: 'necklace', note: 'เพิ่มประกายด้วยเพชรล้อมหรือทรงช่อ เหมาะกับงานค่ำและโอกาสพิเศษ' },
+  { label: 'Unique & Vintage', piece: 'bracelet', note: 'เลือกลวดลายโบราณ ตัวเรือนทองด้าน หรืองานแฮนด์เมดที่ไม่ซ้ำใคร' },
+  { label: 'Modern Minimalist', piece: 'necklace', note: 'เลือกเส้นสายเรียบ ตัวเรือนบางเฉียบ และอัญมณีเม็ดเดี่ยวฝังเสมอผิว' }
+];
+
+/* ---------- ตรรกะคำนวณผลลัพธ์ ----------
+   1) รวมคะแนนทุกข้อ  → ข้อ 1 (เดือนเกิด) หนักที่สุด จึงเป็นแกนหลักของ "อัญมณีหลัก"
+   2) หินเสริมพลังรอง = อัญมณีที่ได้คะแนนสูงสุดจากข้อ 2-5 เท่านั้น (ไม่นับหินหลัก)
+   3) คะแนนเท่ากัน: ดูคะแนนข้อ 1 ก่อน แล้วค่อยเรียงตาม GEM_ORDER */
+function computeResult(answers) {
+  const total = {}, others = {};
+  GEM_ORDER.forEach(function (k) { total[k] = 0; others[k] = 0; });
+  answers.forEach(function (a, qi) {
+    const w = QUESTIONS[qi].options[a].score;
+    Object.keys(w).forEach(function (g) {
+      total[g] += w[g];
+      if (qi > 0) others[g] += w[g];
+    });
+  });
+  const q1 = QUESTIONS[0].options[answers[0]].score;
+  const anchor = function (k) { return q1[k] || 0; };
+  const byTotal = GEM_ORDER.slice().sort(function (a, b) {
+    return total[b] - total[a] || anchor(b) - anchor(a) || GEM_ORDER.indexOf(a) - GEM_ORDER.indexOf(b);
+  });
+  const primary = byTotal[0];
+  const bySecond = GEM_ORDER.filter(function (k) { return k !== primary; }).sort(function (a, b) {
+    return others[b] - others[a] || total[b] - total[a] || GEM_ORDER.indexOf(a) - GEM_ORDER.indexOf(b);
+  });
+  return { primary: primary, secondary: bySecond[0], scores: total };
+}
+/* ===== LOGIC END ===== */
+
+/* ==========================================================================
+   ส่วนแสดงผล (ปกติไม่ต้องแก้)
+   ========================================================================== */
+document.documentElement.lang = 'th';
+const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = function (s, r) { return (r || document).querySelector(s); };
+const N = QUESTIONS.length;
+const state = { screen: 'welcome', q: 0, answers: new Array(N).fill(null), lock: false, result: null };
+
+/* ---------- ภาพอัญมณี (SVG ตัดเหลี่ยม) ---------- */
+const FACETS = [
+  ['20,70 65,30 85,70', '#fff', .30], ['65,30 100,30 85,70', '#fff', .55],
+  ['100,30 135,30 115,70', '#fff', .20], ['100,30 85,70 115,70', '#fff', .40],
+  ['135,30 180,70 115,70', '#000', .10], ['20,70 85,70 100,170', '#fff', .14],
+  ['85,70 115,70 100,170', '#000', .16], ['115,70 180,70 100,170', '#000', .30]
+];
+function star(x, y, s) {
+  return '<path class="sparkle" transform="translate(' + x + ' ' + y + ') scale(' + s + ')" d="M0,-10 L2.5,-2.5 L10,0 L2.5,2.5 L0,10 L-2.5,2.5 L-10,0 L-2.5,-2.5Z"/>';
+}
+function gemSVG(color, sparkle) {
+  const style = color ? ' style="--gem:' + color + '"' : '';
+  const facets = FACETS.map(function (f) {
+    return '<polygon points="' + f[0] + '" fill="' + f[1] + '" fill-opacity="' + f[2] + '" stroke="rgba(255,255,255,.55)" stroke-width="1" stroke-linejoin="round"/>';
+  }).join('');
+  return '<svg class="gem" viewBox="0 0 200 180" aria-hidden="true" focusable="false"' + style + '>' +
+    '<polygon points="20,70 65,30 135,30 180,70 100,170" fill="var(--gem)"/>' + facets +
+    '<polygon points="20,70 65,30 135,30 180,70 100,170" fill="none" stroke="var(--ink)" stroke-opacity=".2" stroke-width="1.2" stroke-linejoin="round"/>' +
+    (sparkle ? star(180, 24, 1) + star(18, 34, .75) + star(168, 148, .6) : '') + '</svg>';
+}
+
+const ICONS = {
+  ring: '<svg class="jw-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="15.5" r="6"/><path d="M9 6.5 12 3l3 3.5-3 3z"/></svg>',
+  necklace: '<svg class="jw-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 4.5c0 8 4 11.5 8.5 11.5s8.500-3.500 8.500-11.500"/><path d="M12 16l-2.500 3.200L12 22.500l2.500-3.300z"/></svg>',
+  bracelet: '<svg class="jw-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><ellipse cx="12" cy="12" rx="9.500" ry="6"/><ellipse cx="12" cy="12" rx="6.500" ry="3.200"/></svg>'
+};
+const PIECE_LABEL = { ring: 'แหวน', necklace: 'สร้อยคอ', bracelet: 'กำไล' };
+
+/* ---------- สลับหน้าจอ ---------- */
+function show(name) {
+  state.screen = name;
+  ['welcome', 'quiz', 'result'].forEach(function (n) { $('#screen-' + n).hidden = n !== name; });
+  const el = $('#screen-' + name);
+  el.classList.remove('screen-enter'); void el.offsetWidth; el.classList.add('screen-enter');
+  try { window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' }); } catch (e) { /* ignore */ }
+}
+
+/* ---------- หน้าแรก ---------- */
+function previewGem(key) {
+  const g = GEMS[key];
+  $('#stage').style.setProperty('--gem', g.color);
+  $('#stage-name').textContent = g.th;
+  $('#stage-en').textContent = g.en;
+  $('#stage-tag').textContent = g.tagline;
+  document.querySelectorAll('.pick').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.gem === key)); });
+}
+function initWelcome() {
+  $('#stage-gem').innerHTML = gemSVG(null, true);
+  $('#picks').innerHTML = GEM_ORDER.map(function (k) {
+    return '<button type="button" class="pick" data-gem="' + k + '" aria-pressed="false"><span class="mini">' + gemSVG(GEMS[k].color, false) + '</span><span>' + GEMS[k].th + '</span></button>';
+  }).join('');
+  previewGem('ruby');
+  $('#brand-mark').innerHTML = gemSVG('#C4A46A', false);
+  $('#brand-name').textContent = BRAND_NAME;
+  $('#foot-brand').textContent = '© ' + BRAND_NAME + ' Fine Jewelry';
+}
+
+/* ---------- แบบทดสอบ ---------- */
+function startQuiz() {
+  state.q = 0; state.answers = new Array(N).fill(null); state.lock = false; state.result = null;
+  clearHash();
+  show('quiz');
+  renderQuestion('fwd');
+}
+function renderQuestion(dir) {
+  const q = QUESTIONS[state.q], picked = state.answers[state.q];
+  $('#progress-label').textContent = 'ข้อ ' + (state.q + 1) + ' / ' + N;
+  $('#bar-fill').style.width = ((state.q + 1) / N * 100) + '%';
+  $('#bar').setAttribute('aria-valuenow', String(state.q + 1));
+  $('#btn-back').disabled = state.q === 0;
+  const enter = reduce ? '' : (dir === 'back' ? 'q-enter-back' : 'q-enter-fwd');
+  const opts = q.options.map(function (o, i) {
+    return '<button type="button" class="opt" role="radio" aria-checked="' + (picked === i) + '" data-i="' + i + '">' +
+      '<span class="opt-key">' + 'ABCD'[i] + '</span><span><span class="opt-main">' + o.main + '</span>' +
+      (o.hint ? '<span class="opt-hint">' + o.hint + '</span>' : '') + '</span></button>';
+  }).join('');
+  $('#quiz-body').innerHTML = '<div class="q-panel ' + enter + '"><p class="label">คำถามที่ ' + (state.q + 1) + '</p>' +
+    '<h2 class="q-title" id="q-title" tabindex="-1">' + q.title + '</h2>' +
+    '<div class="opts" role="radiogroup" aria-labelledby="q-title">' + opts + '</div></div>';
+  try { $('#q-title').focus({ preventScroll: true }); } catch (e) { /* ignore */ }
+}
+function choose(i) {
+  if (state.lock) return;
+  state.lock = true;
+  state.answers[state.q] = i;
+  document.querySelectorAll('.opt').forEach(function (b) { b.setAttribute('aria-checked', String(Number(b.dataset.i) === i)); });
+  const panel = $('.q-panel');
+  setTimeout(function () {
+    if (panel && !reduce) panel.classList.add('q-leave');
+    setTimeout(function () {
+      state.lock = false;
+      if (state.q < N - 1) { state.q++; renderQuestion('fwd'); }
+      else { const r = computeResult(state.answers); showResult(r.primary, r.secondary, false); }
+    }, reduce ? 0 : 220);
+  }, reduce ? 0 : 320);
+}
+function goBack() {
+  if (state.lock || state.q === 0) return;
+  state.q--; renderQuestion('back');
+}
+
+/* ---------- ผลลัพธ์ ---------- */
+function makeHash(p, s) { return '#gem-' + p + '-' + s; }
+function parseHash() {
+  const m = /^#gem-([a-z]+)-([a-z]+)$/.exec(location.hash);
+  return m && GEMS[m[1]] && GEMS[m[2]] && m[1] !== m[2] ? { p: m[1], s: m[2] } : null;
+}
+function clearHash() {
+  if (!location.hash) return;
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { try { location.hash = ''; } catch (e2) { /* ignore */ } }
+}
+function shareUrl() {
+  const base = SHARE_BASE_URL || location.href.split('#')[0];
+  return base + makeHash(state.result.primary, state.result.secondary);
+}
+function showResult(p, s, shared) {
+  state.result = { primary: p, secondary: s, shared: shared };
+  const g = GEMS[p], g2 = GEMS[s];
+  const a = state.answers, hasAns = !shared && a[0] !== null;
+  const style = hasAns && a[3] !== null ? STYLES[a[3]] : null;
+  const quarter = hasAns ? QUESTIONS[0].options[a[0]].main : '';
+
+  const jewelry = ['ring', 'necklace', 'bracelet'].map(function (k) {
+    return '<div class="jw">' + ICONS[k] + '<div><span class="jw-name">' + PIECE_LABEL[k] + '</span>' +
+      (style && style.piece === k ? '<span class="badge">เข้ากับสไตล์คุณ</span>' : '') +
+      '<span class="jw-text">' + g.jewelry[k] + '</span></div></div>';
+  }).join('');
+
+  $('#result-body').innerHTML =
+    (shared ? '<p class="shared-note">นี่คือผลลัพธ์ที่เพื่อนแชร์มาให้ อยากรู้ว่าอัญมณีของคุณคืออะไร ลองทำแบบทดสอบของคุณเองได้เลย</p>' : '') +
+    '<div class="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">' +
+      '<aside class="gem-panel" style="--gem:' + g.color + '">' +
+        '<p class="label">อัญมณีประจำตัวของคุณ</p>' +
+        '<div class="gem-art">' + gemSVG(g.color, true) + '</div>' +
+        '<h2 class="gem-name">' + g.th + '</h2><p class="gem-en">' + g.en + '</p>' +
+        '<p class="gem-tag">' + g.tagline + '</p>' +
+        (hasAns ? '<p class="chip-quarter">จับคู่จากช่วงเดือนเกิด <strong>' + quarter + '</strong> เป็นแกนหลัก ผสานกับพลังที่คุณเลือกในข้อ 2 ถึง 5</p>' : '') +
+      '</aside>' +
+      '<div class="sheet">' +
+        '<section><h3 class="sec-title">ความหมายเชิงบวก<span class="sec-en">Meaning</span></h3><p class="copy">' + g.meaning + '</p></section>' +
+        '<section><h3 class="sec-title">คีย์เวิร์ดพลังงาน<span class="sec-en">Energy</span></h3><ul class="chips">' +
+          g.keywords.map(function (k) { return '<li class="chip">' + k + '</li>'; }).join('') + '</ul></section>' +
+        '<section><h3 class="sec-title">พาเล็ตสีมงคล<span class="sec-en">Palette</span></h3><ul class="palette">' +
+          g.palette.map(function (c) { return '<li><div class="sw-chip" style="background:' + c.hex + '"></div><div class="sw-name">' + c.name + '</div></li>'; }).join('') + '</ul></section>' +
+        '<section><h3 class="sec-title">เครื่องประดับที่เข้ากัน<span class="sec-en">Jewelry</span></h3>' +
+          (style ? '<p class="style-note"><strong>สไตล์ของคุณ: ' + style.label + '</strong><br>' + style.note + '</p>' : '') + jewelry + '</section>' +
+        '<section><h3 class="sec-title">หินเสริมพลังรอง<span class="sec-en">Secondary</span></h3>' +
+          '<div class="second"><div style="width:4.2rem">' + gemSVG(g2.color, false) + '</div><div>' +
+          '<p class="second-name">' + g2.th + '<span class="en">' + g2.en + '</span></p><p class="meta">' + g2.boost + '</p></div></div></section>' +
+      '</div>' +
+    '</div>' +
+    '<div class="cta">' +
+      '<div class="cta-row">' +
+        '<a class="btn" id="cta-shop" href="' + g.shop + '" target="_blank" rel="noopener">ช้อปคอลเลกชันอัญมณีนี้ <span class="arrow" aria-hidden="true">→</span></a>' +
+        '<button class="btn btn-ghost" type="button" data-act="retake">' + (shared ? 'ทำแบบทดสอบของคุณ' : 'ทำแบบทดสอบอีกครั้ง') + '</button>' +
+        '<button class="btn btn-ghost" type="button" data-act="share">แชร์ผลลัพธ์</button>' +
+      '</div>' +
+      '<div class="share-links"><span class="meta">แชร์ผ่าน</span>' +
+        '<a class="text-link" id="share-line" target="_blank" rel="noopener" href="#">LINE</a>' +
+        '<a class="text-link" id="share-fb" target="_blank" rel="noopener" href="#">Facebook</a>' +
+        '<span class="meta" id="share-status" role="status" aria-live="polite"></span></div>' +
+      '<input class="share-input" id="share-input" type="text" readonly hidden aria-label="ลิงก์ผลลัพธ์ของคุณ">' +
+    '</div>';
+
+  const url = shareUrl();
+  $('#share-line').href = 'https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(url);
+  $('#share-fb').href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url);
+  show('result');
+  const h = makeHash(p, s);
+  if (location.hash !== h) { try { location.hash = h; } catch (e) { /* ignore */ } }
+}
+function copyLink() {
+  const url = shareUrl(), status = $('#share-status'), input = $('#share-input');
+  const fallback = function () {
+    input.value = url; input.hidden = false; input.focus(); input.select();
+    status.textContent = 'คัดลอกลิงก์ด้านล่างได้เลย';
+  };
+  try {
+    navigator.clipboard.writeText(url).then(function () { status.textContent = 'คัดลอกลิงก์แล้ว'; input.hidden = true; }, fallback);
+  } catch (e) { fallback(); }
+}
+
+/* ---------- Events ---------- */
+document.addEventListener('click', function (e) {
+  const t = e.target.closest('button, a'); if (!t) return;
+  if (t.id === 'btn-start') startQuiz();
+  else if (t.id === 'btn-back') goBack();
+  else if (t.classList.contains('opt')) choose(Number(t.dataset.i));
+  else if (t.classList.contains('pick')) previewGem(t.dataset.gem);
+  else if (t.dataset.act === 'retake') startQuiz();
+  else if (t.dataset.act === 'share') copyLink();
+});
+document.addEventListener('mouseover', function (e) {
+  const t = e.target.closest('.pick'); if (t && state.screen === 'welcome') previewGem(t.dataset.gem);
+});
+document.addEventListener('keydown', function (e) {
+  if (state.screen !== 'quiz' || e.metaKey || e.ctrlKey || e.altKey) return;
+  const i = 'abcd'.indexOf(e.key.toLowerCase());
+  const n = '1234'.indexOf(e.key);
+  const idx = i > -1 ? i : n;
+  if (idx > -1 && e.key.length === 1) choose(idx);
+});
+window.addEventListener('hashchange', function () {
+  const h = parseHash();
+  if (h) {
+    const r = state.result;
+    if (!(r && r.primary === h.p && r.secondary === h.s)) showResult(h.p, h.s, true);
+  } else if (state.screen === 'result') {
+    show('welcome');
+  }
+});
+
+/* ---------- Init ---------- */
+initWelcome();
+(function () { const h = parseHash(); if (h) showResult(h.p, h.s, true); })();
+</script>
+
+</body>
+</html>
